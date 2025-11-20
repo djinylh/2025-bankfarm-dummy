@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @ToString
@@ -12,7 +14,7 @@ public class CustomerJoinReq {
     private String custPhone;
     private String custEmail;
     private String custbirth;
-    private String custCrdPoint;
+    private int custCrdPoint;
     private String custSsn;
     private String custCd;
     private String custTp;
