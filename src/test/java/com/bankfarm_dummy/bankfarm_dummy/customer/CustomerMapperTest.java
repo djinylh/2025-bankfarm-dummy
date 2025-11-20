@@ -96,7 +96,8 @@ class CustomerMapperTest extends Dummy {
             char yn = bsYn[bsYnIdx];
 
             // 회사 이름 [대충 고객 이름에서 + 회사]
-            String cpNm =  "(주)" +custName + "회사";
+            int num = rnd.nextInt(1000);
+            String cpNm =  "(주)" + custName + "회사" + num;
 
             // 여기서 사업자 고객이면
             if(req.getCustTp().equals("CU012") ){
