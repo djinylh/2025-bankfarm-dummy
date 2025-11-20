@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://BankFarm/db_odd_adv_2
+    username: odd_adv_2
+    password: index502
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: mappers/**/*.xml
