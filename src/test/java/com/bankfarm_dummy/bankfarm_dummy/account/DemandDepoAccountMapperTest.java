@@ -8,6 +8,8 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class DemandDepoAccountMapperTest extends Dummy {
@@ -29,11 +31,46 @@ class DemandDepoAccountMapperTest extends Dummy {
         char[] sale = {'Y','N'};
         int saleIdx = (int)(Math.random()*sale.length);
 
+        //상품 이름
+        String[] acctProdFName= {"바로","체크","편한","생활","자유","내맘대로","평생","미래"};
+        int fNameIdx = (int)(Math.random()*acctProdFName.length);
+
+        String[] acctProdMName= {"든든","스마트","요구불","플러스","플랜","행복","사랑","가득"};
+        int mNameIdx = (int)(Math.random()*acctProdMName.length);
+
+        String acctFullName = acctProdFName[fNameIdx] +  acctProdMName[mNameIdx] + "통장" + (int)(Math.random()* 20)+1;
+
+        // 상품 설명
+        String[] acctProdDes= {
+                "입출금이 자유로운 기본 요구불 계좌"
+                ,"체크카드와 연동되는 생활자금 계좌"
+                ,"손쉽게 관리 가능한 요구불 계좌"
+                ,"급여, 생활비 등 일상 자금 관리용 계좌"
+                ,"최소 잔액 제한 없이 자유롭게 입출금 가능"
+                ,"입출금은 자유지만 소액 이자도 지급하는 계좌"
+        };
+        int desIdx = (int)(Math.random()*acctProdDes.length);
+
+
+        LocalDate start = LocalDate.of(1980, 1, 2);
+        LocalDate end   = LocalDate.of(2025, 12, 31);
+        long days = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+        LocalDate randomDate = start.plusDays((long)(Math.random() * days));
+
+
+        LocalDate start2 = LocalDate.of(1990, 1, 2);
+        LocalDate end2   = LocalDate.of(2025, 12, 31);
+        long days2 = java.time.temporal.ChronoUnit.DAYS.between(start2, end2);
+        LocalDate randomDate2 = start.plusDays((long)(Math.random() * days2));
+
+
+
+
         DepoProdInsertReq prodReq = new DepoProdInsertReq();
-//        prodReq.setDepoProdNm();
-//        prodReq.setDepoStDt();
+        prodReq.setDepoProdNm(acctFullName);
+        prodReq.setDepoStDt(randomDate);
 //        prodReq.setDepoEdDt();
-//        prodReq.setDepoPodDes();
+        prodReq.setDepoPodDes(acctProdDes[desIdx]);
         prodReq.setDepoIntrstCalcUnit("DO018");
         prodReq.setDepoIntrstPayCycle("DO022");
         prodReq.setDepoIntrstCalcTp("DO026");
