@@ -1,6 +1,5 @@
-package com.bankfarm_dummy.bankfarm_dummy.depo;
+package com.bankfarm_dummy.bankfarm_dummy.depo.common;
 
-import com.bankfarm_dummy.bankfarm_dummy.depo.model.DepoProdInsertReq;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

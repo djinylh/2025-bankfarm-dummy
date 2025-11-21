@@ -3,7 +3,7 @@
 <mapper namespace = "com.bankfarm_dummy.bankfarm_dummy.account.AccountMapper">
 
 
-    <!--지점 등록-->
+
     <insert id = "accountInsert" parameterType="com.bankfarm_dummy.bankfarm_dummy.account.AccountInsertReq" useGeneratedKeys="true" keyProperty="acctId" >
         INSERT INTO account
         SET cust_id  = #{custId}
@@ -16,6 +16,13 @@
         ,acct_sts_cd = #{acctStsCd}
         ,acct_is_ded_yn = #{acctIsDedYn}
     </insert>
+
+    <select id="countByAccountNum">
+        SELECT acctId
+        FROM account
+        WHERE acct_num = #{acctNum}
+    </select>
+
 
 
 </mapper>
