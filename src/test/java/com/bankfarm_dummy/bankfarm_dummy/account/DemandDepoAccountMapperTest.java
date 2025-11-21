@@ -24,9 +24,20 @@ class DemandDepoAccountMapperTest extends Dummy {
         DepoContractMapper depoContractMapper = sqlSession.getMapper(DepoContractMapper.class);
 
 
+
+        //판매 여부
+        char[] sale = {'Y','N'};
+        int saleIdx = (int)(Math.random()*sale.length);
+
         DepoProdInsertReq prodReq = new DepoProdInsertReq();
 //        prodReq.setDepoProdNm();
 //        prodReq.setDepoStDt();
+//        prodReq.setDepoEdDt();
+//        prodReq.setDepoPodDes();
+        prodReq.setDepoIntrstCalcUnit("DO018");
+        prodReq.setDepoIntrstPayCycle("DO022");
+        prodReq.setDepoIntrstCalcTp("DO026");
+        prodReq.setDepoSaleYn(sale[saleIdx]);
 
 
 

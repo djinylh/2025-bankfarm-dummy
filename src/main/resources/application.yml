@@ -13,12 +13,9 @@ mybatis:
     database: mysql
     hibernate:
       ddl-auto: none
-      show-sql: true
-      format-sql: true
     properties:
       hibernate:
         jdbc:
           batch_size: 50
         format_sql: true
         order_updates: true
-        show-sql: true
