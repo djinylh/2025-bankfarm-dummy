@@ -118,7 +118,7 @@ public class InsrContractMapperTest extends Dummy {
 
             insrMapper.insrContractInsert(req);
 
-            if (i % 200 == 0) {
+            if (i > 0 && i % 200 == 0) {
                 sqlSession.flushStatements();
             }
         }
