@@ -12,6 +12,7 @@ public class DepoProdInsertReq {
     private String depoProdNm;
     private LocalDate depoStDt;
     private LocalDate depoEdDt;
+    private String depoProdTp;
     private String depoPodDes;
     private String depoIntrstCalcUnit;
     private String depoIntrstPayCycle;

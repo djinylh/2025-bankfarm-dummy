@@ -6,5 +6,5 @@ import org.apache.ibatis.annotations.Mapper;
 public interface DepoProdMapper {
 
     int depoProdInsert(DepoProdInsertReq depoProdReq);
-
+    int insertDepoProd(DepoProdInsertReq depoProdReq);
 }

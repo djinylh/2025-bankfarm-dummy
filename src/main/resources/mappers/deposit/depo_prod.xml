@@ -14,5 +14,18 @@
         ,depo_sale_yn = #{depoSaleYn}
     </insert>
 
+    <insert id = "insertDepoProd" parameterType="com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoProdInsertReq">
+        INSERT INTO depo_prod
+        SET
+        depo_prod_nm  = #{depoProdNm},
+        depo_st_dt = #{depoStDt},
+        depo_en_dt = #{depoEdDt},
+        depo_prod_tp = #{depoProdTp},
+        depo_prod_des = #{depoPodDes},
+        depo_intrst_calc_unit = #{depoIntrstCalcUnit},
+        depo_intrst_pay_cycle = #{depoIntrstPayCycle},
+        depo_intrst_calc_tp = #{depoIntrstCalcTp},
+        depo_sale_yn = #{depoSaleYn}
+    </insert>
 
 </mapper>
