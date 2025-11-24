@@ -35,11 +35,11 @@ class CardOptionDefMapperTest extends Dummy {
 
             sqlSession.flushStatements();
 
-            }
-
         }
 
-
-
-
     }
+
+
+
+
+}
