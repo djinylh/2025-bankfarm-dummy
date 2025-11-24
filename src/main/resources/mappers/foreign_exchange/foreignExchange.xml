@@ -29,7 +29,7 @@
         fx_crt_at      = #{fxCrtAt}
     </insert>
 
-    <select id="selectActiveFxLatestRate" resultType="FxRtRes">
+    <select id="selectActiveFxLatestRate" resultType="com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.model.FxRtHistoryRes">
         SELECT
         c.fx_currency_id      AS fxCurrencyId,
         c.fx_nation           AS fxNation,
