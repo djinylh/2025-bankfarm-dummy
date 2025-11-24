@@ -22,13 +22,8 @@ class DemandDepoProdMapperTest extends Dummy {
         for(int i=0;i<8;i++){
 
         SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
-
-        //계좌 맵퍼
-        AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
         //계좌 상품 맵퍼
         DepoProdMapper depoProdMapper = sqlSession.getMapper(DepoProdMapper.class);
-        //계좌 계약 맵퍼
-        DepoContractMapper depoContractMapper = sqlSession.getMapper(DepoContractMapper.class);
 
 
 
@@ -74,7 +69,7 @@ class DemandDepoProdMapperTest extends Dummy {
         DepoProdInsertReq prodReq = new DepoProdInsertReq();
         prodReq.setDepoProdNm(acctFullName);
         prodReq.setDepoStDt(randomDate);
-        prodReq.setDepoEdDt(randomDate2);
+//        prodReq.setDepoEdDt(randomDate2);
         prodReq.setDepoPodDes(acctProdDes[desIdx]);
         prodReq.setDepoIntrstCalcUnit("DO018");
         prodReq.setDepoIntrstPayCycle("DO022");
