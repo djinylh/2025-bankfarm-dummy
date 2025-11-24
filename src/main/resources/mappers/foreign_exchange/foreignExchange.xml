@@ -29,17 +29,17 @@
         fx_crt_at      = #{fxCrtAt}
     </insert>
 
-    <select id="selectActiveFxLatestRate" resultType="FxRtRes">
+    <select id="selectActiveFxLatestRate" resultType="com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.model.FxRtHistoryRes">
         SELECT
         c.fx_currency_id      AS fxCurrencyId,
-        c.fx_nation           AS fxNation,
+<!--        c.fx_nation           AS fxNation,-->
         c.fx_min_limit        AS fxMinLimit,
-        c.fx_currency_symbol  AS fxCurrencySymbol,
-        c.fx_currency_nm      AS fxCurrencyNm,
+<!--        c.fx_currency_symbol  AS fxCurrencySymbol,-->
+<!--        c.fx_currency_nm      AS fxCurrencyNm,-->
         r.fx_rt_id            AS fxRtId,
         r.fx_charge_rt        AS fxChargeRt,
-        r.fx_commission       AS fxCommission,
-        r.fx_crt_at           AS fxCrtAt
+        r.fx_commission       AS fxCommission
+<!--        r.fx_crt_at           AS fxCrtAt-->
         FROM fx_currency c
         JOIN (
         SELECT

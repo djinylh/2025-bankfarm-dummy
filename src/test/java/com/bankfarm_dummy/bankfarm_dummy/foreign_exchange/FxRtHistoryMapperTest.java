@@ -1,7 +1,7 @@
 package com.bankfarm_dummy.bankfarm_dummy.foreign_exchange;
 
 import com.bankfarm_dummy.bankfarm_dummy.Dummy;
-import com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.medel.FxRtHistoryReq;
+import com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.model.FxRtHistoryReq;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;

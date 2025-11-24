@@ -1,4 +1,4 @@
-package com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.medel;
+package com.bankfarm_dummy.bankfarm_dummy.foreign_exchange.model;
 
 import lombok.Getter;
 import lombok.Setter;
