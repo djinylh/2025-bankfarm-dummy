@@ -22,13 +22,8 @@ class DemandDepoProdMapperTest extends Dummy {
         for(int i=0;i<8;i++){
 
         SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
-
-        //계좌 맵퍼
-        AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
         //계좌 상품 맵퍼
         DepoProdMapper depoProdMapper = sqlSession.getMapper(DepoProdMapper.class);
-        //계좌 계약 맵퍼
-        DepoContractMapper depoContractMapper = sqlSession.getMapper(DepoContractMapper.class);
 
 
 
@@ -43,7 +38,7 @@ class DemandDepoProdMapperTest extends Dummy {
         String[] acctProdMName= {"든든","스마트","요구불","플러스","플랜","행복","사랑","가득"};
         int mNameIdx = (int)(Math.random()*acctProdMName.length);
 
-        String acctFullName = acctProdFName[i] +  acctProdMName[mNameIdx] + "통장" + (int)(Math.random()* 20)+1;
+        String acctFullName = acctProdFName[i] +  acctProdMName[mNameIdx] + "요구불 통장" + (int)(Math.random()* 20)+1;
 
         // 상품 설명
         String[] acctProdDes= {
