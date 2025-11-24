@@ -79,6 +79,8 @@ class DemandDepoProdMapperTest extends Dummy {
         // 계좌 상품 만들기
         depoProdMapper.depoProdInsert(prodReq);
         sqlSession.flushStatements();
+            sqlSession.commit();
+            sqlSession.close();
         }
 
 
