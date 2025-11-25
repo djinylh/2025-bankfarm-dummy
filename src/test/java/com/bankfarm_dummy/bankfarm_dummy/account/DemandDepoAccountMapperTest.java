@@ -4,10 +4,14 @@ import com.bankfarm_dummy.bankfarm_dummy.Dummy;
 import com.bankfarm_dummy.bankfarm_dummy.account.model.AccountFindAcctNumReq;
 import com.bankfarm_dummy.bankfarm_dummy.account.model.AccountFindAcctNumRes;
 import com.bankfarm_dummy.bankfarm_dummy.account.model.GetDemandProdRes;
+import com.bankfarm_dummy.bankfarm_dummy.branch.BranchMapper;
+import com.bankfarm_dummy.bankfarm_dummy.branch.model.GetBranchByEmpRes;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractInsertReq;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractMapper;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoProdInsertReq;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoProdMapper;
+import com.bankfarm_dummy.bankfarm_dummy.prod_document.ProdDocumentMapper;
+import com.bankfarm_dummy.bankfarm_dummy.prod_document.model.ProdDocumentReq;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
@@ -23,22 +27,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DemandDepoAccountMapperTest extends Dummy {
 
-
     @Test
     void getAccountByID() {
-
-        for(int i =0; i<500;i++){
-
+        int batchSize = 1000;
         SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
 
         //계좌 맵퍼
         AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
-        //계좌 상품 맵퍼
-        DepoProdMapper depoProdMapper = sqlSession.getMapper(DepoProdMapper.class);
         //계좌 계약 맵퍼
         DepoContractMapper depoContractMapper = sqlSession.getMapper(DepoContractMapper.class);
         //상품 불러오기
         List<GetDemandProdRes> getDemandProdRes = accountMapper.prodByDemand();
+        // 지점 찾는 맵퍼
+        BranchMapper branchMapper = sqlSession.getMapper(BranchMapper.class);
+        // 공통 상품 계약 맵퍼
+        ProdDocumentMapper prodDocumentMapper = sqlSession.getMapper(ProdDocumentMapper.class);
+
+        for(int i =0; i<500;i++){
 
         String finalAcctNum = accountNum();
 
@@ -70,7 +75,8 @@ class DemandDepoAccountMapperTest extends Dummy {
 
         accountMapper.accountInsert(req);
         // 계좌 생성.
-//        sqlSession.flushStatements();
+        sqlSession.flushStatements();
+
 
         List<GetDemandProdRes> list= accountMapper.prodByDemand();
         int listIdx = (int)(Math.random()*list.size());
@@ -106,12 +112,27 @@ class DemandDepoAccountMapperTest extends Dummy {
 
         depoContractMapper.depoContractInsert(contReq);
         //계약 생성
-//        sqlSession.flushStatements();
+            sqlSession.flushStatements();
 
 
 
+        // 상품 계약 테이블 이동
+          GetBranchByEmpRes empRes = branchMapper.getBranchIdByEmpId(empId);
+          long branchId = empRes.getBranId();
+
+
+            ProdDocumentReq prodReq = new ProdDocumentReq();
+            prodReq.setBranId(branchId);
+            prodReq.setDocProdTp("PD006");
+            prodReq.setDocNm("요구불 계좌 문서 이름");
+            prodReq.setDocProdId(contReq.getDepoContractId());
+          prodDocumentMapper.prodDocumentJoin(prodReq);
+
+            sqlSession.flushStatements();
 
         }
+        sqlSession.commit();
+        sqlSession.close();
 
 
     }

@@ -9,8 +9,4 @@ import lombok.ToString;
 @ToString
 public class GetBranchByEmpRes {
     private long branId;
-
-    public long getBranId(){
-        return branId;
-    }
 }
