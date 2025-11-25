@@ -20,4 +20,7 @@ public class DepoContractInsertReq {
     private LocalDate depoMaturityDt;
     private BigDecimal depoAppliedIntrstRt;
     private String depoActiveCd;
+    private String depoPayoutBankCd;
+    private String depoPayoutAcctNum;
+    private String depoPayoutTp;
 }

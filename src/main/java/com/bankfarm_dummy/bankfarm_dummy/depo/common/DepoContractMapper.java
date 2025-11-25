@@ -1,5 +1,6 @@
 package com.bankfarm_dummy.bankfarm_dummy.depo.common;
 
+import com.bankfarm_dummy.bankfarm_dummy.depo.DepoProdSelectRes;
 import com.bankfarm_dummy.bankfarm_dummy.depo.DepoProdTermReq;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -11,6 +12,6 @@ public interface DepoContractMapper {
 
     List<Long> selectEmployeeIds();
     List<Long> selectCustomerIds();
-    List<Long> selectDepoProdIds();
+    List<DepoProdSelectRes> selectDepoProds();
 
 }

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace = "com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractMapper">
 
-    <!--  customer의 PK가 생긴다면 CustomerJoinReq의 custId쪽으로 바로 PK를 주입하겠다  -->
+    <!--  depo_contract PK가 생긴다면 DepoContractInsertReq depoContractId쪽으로 바로 PK를 주입하겠다  -->
     <insert id="depoContractInsert" parameterType="com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractInsertReq" useGeneratedKeys="true" keyProperty="depoContractId">
         INSERT INTO depo_contract
         SET cust_id = #{custId}
@@ -14,6 +14,9 @@
         ,depo_maturity_dt = #{depoMaturityDt}
         ,depo_applied_intrst_rt = #{depoAppliedIntrstRt}
         ,depo_active_cd = #{depoActiveCd}
+        ,depo_payout_bank_cd = #{depoPayoutBankCd}
+        ,depo_payout_acct_num = #{depoPayoutAcctNum}
+        ,depo_payout_tp = #{depoPayoutTp}
     </insert>
 
     <!--    직원 아이디 가져오기-->
@@ -28,10 +31,18 @@
         FROM customer
     </select>
 
-<!--    요구불 제외한 상품 아이디 가져오기-->
-    <select id="selectDepoProdIds">
-        SELECT depo_prod_id
-        FROM depo_prod
+<!--    요구불 제외한 상품 정보 가져오기-->
+    <select id="selectDepoProds" resultType="com.bankfarm_dummy.bankfarm_dummy.depo.DepoProdSelectRes">
+        SELECT depo_prod_id AS depoProdId,
+            p.depo_prod_tp AS depoProdTp,
+            p.depo_start_dt AS depoStartDt,
+            p.depo_end_dt AS depoEndDt,
+            t.depo_term_month AS depoTermMonth,
+            t.depo_min_amt AS depoMinAmt,
+            t.depo_max_amt AS depoMaxAmt
+        FROM depo_prod p
+        JOIN depo_prod_term t
+        ON p.depo_prod_id = t.depo_prod_id
         WHERE depo_prod_tp != 'DO001'
     </select>
 </mapper>
