@@ -1,4 +1,4 @@
-package com.bankfarm_dummy.bankfarm_dummy.transaction.model;
+package com.bankfarm_dummy.bankfarm_dummy.transaction.common;
 
 import lombok.Getter;
 import lombok.Setter;
