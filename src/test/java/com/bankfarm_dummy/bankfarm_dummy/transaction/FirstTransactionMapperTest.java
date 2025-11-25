@@ -1,15 +1,14 @@
 package com.bankfarm_dummy.bankfarm_dummy.transaction;
 
 import com.bankfarm_dummy.bankfarm_dummy.Dummy;
+import com.bankfarm_dummy.bankfarm_dummy.transaction.common.TransactionMapper;
 import com.bankfarm_dummy.bankfarm_dummy.transaction.model.GetFirstAcctBalInsertRes;
-import com.bankfarm_dummy.bankfarm_dummy.transaction.model.TransactionInsertGeq;
+import com.bankfarm_dummy.bankfarm_dummy.transaction.common.TransactionInsertGeq;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class FirstTransactionMapperTest extends Dummy {
 
@@ -31,6 +30,7 @@ class FirstTransactionMapperTest extends Dummy {
 
             transactionMapper.transactionInsert(trnsReq);
             sqlSession.flushStatements();
+            sqlSession.close();
         }
 
 

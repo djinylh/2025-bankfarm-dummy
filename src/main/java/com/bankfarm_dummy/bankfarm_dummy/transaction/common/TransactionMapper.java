@@ -1,7 +1,6 @@
-package com.bankfarm_dummy.bankfarm_dummy.transaction;
+package com.bankfarm_dummy.bankfarm_dummy.transaction.common;
 
 import com.bankfarm_dummy.bankfarm_dummy.transaction.model.GetFirstAcctBalInsertRes;
-import com.bankfarm_dummy.bankfarm_dummy.transaction.model.TransactionInsertGeq;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -13,4 +12,5 @@ public interface TransactionMapper {
     int transactionInsert(TransactionInsertGeq req);
     // 입출금 기록이 없는 계좌 리스트
     List<GetFirstAcctBalInsertRes> firstTransaction();
+
 }

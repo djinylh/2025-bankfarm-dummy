@@ -17,18 +17,32 @@
         ,acct_is_ded_yn = #{acctIsDedYn}
     </insert>
 
+<!--    중복되는 계좌인지 확인-->
     <select id="countByAccountNum">
         SELECT acct_id
         FROM account
         WHERE acct_num = #{acctNum}
     </select>
 
-
+<!--    요구불 상품인지 확인-->
     <select id="prodByDemand">
         SELECT d.depo_prod_id
         FROM depo_prod d
         WHERE d.depo_prod_nm LIKE '%요구불%'
     </select>
 
+
+<!--    계좌의 PK와 보유금액 가지고 오기-->
+    <select id="getAcctBalByAcctId">
+        SELECT a.acct_id, a.acct_bal
+        FROM account a
+        WHERE a.acct_id = #{acctId}
+    </select>
+<!--    보유 금액 수정하기-->
+    <update id="ModifyAcctBalByAcctId">
+        UPDATE account
+        SET acct_bal = #{acctBal}
+        WHERE acct_id = #{acctId}
+    </update>
 
 </mapper>
