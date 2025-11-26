@@ -44,7 +44,7 @@ public class BankCardStatementDummy extends JpaDummy {
 
     @BeforeAll
     void beforeAll() {
-        userCardList = userCardRepository.findAll();
+        //userCardList = userCardRepository.findAll();
     }
 
     @Test
@@ -54,60 +54,67 @@ public class BankCardStatementDummy extends JpaDummy {
         int page = 0;
         int size = 5000;
         Page<CreditCardStatement> pageResult;
+        long limit = 5000;
 
-        int globalIndex = 0; // 전체 기준 인덱스 (1부터 시작)
-        int start = 100001;
-        int end = 200000;
-
-        int total = end - start + 1; // 처리할 총 건수
+        long totalCount = cardStatementRepository.count(); // 전체 거래 수
+        long processedCount = 0;
         long startTime = System.currentTimeMillis();
 
+        outerLoop:
         do {
             pageResult = cardStatementRepository.findAll(PageRequest.of(page, size));
-            List<CreditCardStatement> stmts = new ArrayList<>(pageResult.getContent());
+            List<CreditCardStatement> stmts = pageResult.getContent();
 
             for (CreditCardStatement cs : stmts) {
-                globalIndex++;
-                if (globalIndex < start || globalIndex > end) {
-                    continue;
-                }
-                if ("N".equals(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
-                    for (int n = 1; n <= cs.getCardInstallments(); n++) {
-                        CardInstallmentSchedule cis = generateCis(cs, n);
-                        cardInstallmentScheduleRepository.save(cis);
+                processedCount++;
+
+                // ✅ 조건: 환불 아닌 할부 거래만 스케줄 생성
+                if (!"Y".equalsIgnoreCase(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
+                    // ✅ 이미 존재하는 스케줄은 생략
+                    if (!cardInstallmentScheduleRepository.existsByCreditCardStatement(cs)) {
+                        for (int n = 1; n <= cs.getCardInstallments(); n++) {
+                            CardInstallmentSchedule cis = generateCis(cs, n);
+                            cardInstallmentScheduleRepository.save(cis);
+                        }
                     }
                 }
-                if ((globalIndex - start + 1) % 100 == 0 && globalIndex >= start && globalIndex <= end) {
-                    printProgress(globalIndex - start + 1, total, startTime);
+
+                // ✅ 100건마다 진행률 출력
+                if (processedCount % 100 == 0) {
+                    printProgress(processedCount, Math.min(limit, totalCount), startTime);
                 }
 
-                if (globalIndex >= end) {
-                    break;
+                // ✅ 5,000건 처리 시 중단
+                if (processedCount >= limit) {
+                    break outerLoop;
                 }
-
-
             }
-            cardInstallmentScheduleRepository.flush();
 
+            cardInstallmentScheduleRepository.flush();
             stmts.clear();
             entityManager.clear();
-            System.gc();
 
             page++;
 
-            if (globalIndex >= end) break;
-
         } while (!pageResult.isLast());
+
+        long endTime = System.currentTimeMillis();
+        System.out.println("\n✅ 처리 완료: " + processedCount + "건 (" + (endTime - startTime) / 1000 + "초 소요)");
     }
 
-    private void printProgress(int current, int total, long startTime) {
-        int percent = (int) ((current * 100L) / total);
-        int barCount = percent / 2;
-        String bar = "█".repeat(barCount) + "-".repeat(50 - barCount);
-        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+    private void printProgress(long processed, long total, long startTime) {
+        double progress = (double) processed / total * 100;
+        long elapsed = System.currentTimeMillis() - startTime;
+        double elapsedSec = elapsed / 1000.0;
+        double perSec = processed / (elapsedSec == 0 ? 1 : elapsedSec);
+        double remainingSec = (total - processed) / (perSec == 0 ? 1 : perSec);
 
-        System.out.printf("[%s] %3d%% (%d/%d) ⏱ %ds%n", bar, percent, current, total, elapsed);
-        System.out.flush(); // ✅ 즉시 콘솔로 내보내기
+        // ✅ \r 추가 + flush() 강제
+        System.out.printf(
+                "\r진행률: %.2f%% (%d/%d) | 처리속도: %.1f건/초 | 남은예상: %.1f초",
+                progress, processed, total, perSec, remainingSec
+        );
+        System.out.flush();
     }
 
     void processStatements(List<CreditCardStatement> stmts) {
@@ -135,7 +142,7 @@ public class BankCardStatementDummy extends JpaDummy {
         // 신용카드 명세서 insert
         insCardStam(SIZE);
         // 신용카드명세서들의 할부스케줄 생성
-//        insInstmSchd();
+       //insInstmSchd();
     }
 
 
