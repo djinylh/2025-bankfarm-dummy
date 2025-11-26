@@ -14,7 +14,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -42,22 +45,97 @@ public class BankCardStatementDummy extends JpaDummy {
     @BeforeAll
     void beforeAll() {
         userCardList = userCardRepository.findAll();
-        crdCardStmList = cardStatementRepository.findAll();
+    }
 
+    @Test
+    @Transactional
+    @Rollback(false)
+    void insInstmSchdPaged() {
+        int page = 0;
+        int size = 5000;
+        Page<CreditCardStatement> pageResult;
+
+        int globalIndex = 0; // 전체 기준 인덱스 (1부터 시작)
+        int start = 100001;
+        int end = 200000;
+
+        int total = end - start + 1; // 처리할 총 건수
+        long startTime = System.currentTimeMillis();
+
+        do {
+            pageResult = cardStatementRepository.findAll(PageRequest.of(page, size));
+            List<CreditCardStatement> stmts = new ArrayList<>(pageResult.getContent());
+
+            for (CreditCardStatement cs : stmts) {
+                globalIndex++;
+                if (globalIndex < start || globalIndex > end) {
+                    continue;
+                }
+                if ("N".equals(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
+                    for (int n = 1; n <= cs.getCardInstallments(); n++) {
+                        CardInstallmentSchedule cis = generateCis(cs, n);
+                        cardInstallmentScheduleRepository.save(cis);
+                    }
+                }
+                if ((globalIndex - start + 1) % 100 == 0 && globalIndex >= start && globalIndex <= end) {
+                    printProgress(globalIndex - start + 1, total, startTime);
+                }
+
+                if (globalIndex >= end) {
+                    break;
+                }
+
+
+            }
+            cardInstallmentScheduleRepository.flush();
+
+            stmts.clear();
+            entityManager.clear();
+            System.gc();
+
+            page++;
+
+            if (globalIndex >= end) break;
+
+        } while (!pageResult.isLast());
+    }
+
+    private void printProgress(int current, int total, long startTime) {
+        int percent = (int) ((current * 100L) / total);
+        int barCount = percent / 2;
+        String bar = "█".repeat(barCount) + "-".repeat(50 - barCount);
+        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+
+        System.out.printf("[%s] %3d%% (%d/%d) ⏱ %ds%n", bar, percent, current, total, elapsed);
+        System.out.flush(); // ✅ 즉시 콘솔로 내보내기
+    }
+
+    void processStatements(List<CreditCardStatement> stmts) {
+        // ✅ 한 페이지당 할부스케줄 insert
+        for(int i=50001;i<=100000;i++ ) {
+            CreditCardStatement cs = stmts.get(i);
+            if ("N".equals(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
+                for (int n = 1; n <= cs.getCardInstallments(); n++) {
+                    CardInstallmentSchedule cis = generateCis(cs, n);
+                    cardInstallmentScheduleRepository.save(cis);
+                }
+            }
+        }
+        cardInstallmentScheduleRepository.flush();
     }
 
     @Test
     @Rollback(false)
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void insCardTrns() {
 
-        int SIZE = 1000; // 이 중에 반만 신용카드
+        int SIZE = 100000; // 이 중에 반만 신용카드
 
         List<CreditCardStatement> statementList = new ArrayList<>();
         // 신용카드 명세서 insert
-//        insCardStam(SIZE);
+        insCardStam(SIZE);
         // 신용카드명세서들의 할부스케줄 생성
-        insInstmSchd();
+//        insInstmSchd();
     }
 
 
@@ -71,43 +149,14 @@ public class BankCardStatementDummy extends JpaDummy {
                 CreditCardStatement cs = generateCrdCardStm(uc);
                 statementList.add(cs);
             }
+            if (i % 1000 == 0) {      // 💾 메모리 절약용 flush
+                entityManager.clear();      // ✅ 메모리 누적 차단
+                System.gc();
+            }
+
         }
         cardStatementRepository.saveAll(statementList);
         cardStatementRepository.flush();
-    }
-
-
-    void insInstmSchd() {
-        Set<Long> existIds = cardInstallmentScheduleRepository
-                .findAllCreditCardStatementIds();
-
-        int total = crdCardStmList.size();
-        int processed = 0;
-        int BATCH_SIZE = 1000;
-        for(int i=50001;i<=100000;i++ ) {
-            CreditCardStatement cs = crdCardStmList.get(i);
-            if (cs.getCardCrdRefundYn().equals("N") && !existIds.contains(cs.getCardCrdStatementId())) {
-                if(cs.getCardInstallments()!=1) {
-                    int monthNo = cs.getCardInstallments();
-                    List<CardInstallmentSchedule> batch = new ArrayList<>();
-                    for (int n = 1; n <= monthNo; n++) {
-                        batch.add(generateCis(cs, n));
-                    }
-                    cardInstallmentScheduleRepository.saveAll(batch);
-                }
-            }
-            processed++;
-            printProgress(processed, total); // ✅ 진행률 표시
-            if (processed % 100 == 0) {      // 💾 메모리 절약용 flush
-                cardInstallmentScheduleRepository.flush();
-            }
-            if (processed > 0 && processed % BATCH_SIZE == 0) {
-                cardInstallmentScheduleRepository.flush();
-                entityManager.clear(); // 엔티티 캐시 제거
-            }
-
-        }
-        cardInstallmentScheduleRepository.flush();
     }
 
     private void printProgress(int current, int total) {
@@ -162,6 +211,39 @@ public class BankCardStatementDummy extends JpaDummy {
         );
     }
 
+
+//    void insInstmSchd() {
+//        Set<Long> existIds = cardInstallmentScheduleRepository
+//                .findAllCreditCardStatementIds();
+//
+//        int total = crdCardStmList.size();
+//        int processed = 0;
+//        int BATCH_SIZE = 1000;
+//        for(int i=50001;i<=100000;i++ ) {
+//            CreditCardStatement cs = crdCardStmList.get(i);
+//            if (cs.getCardCrdRefundYn().equals("N") && !existIds.contains(cs.getCardCrdStatementId())) {
+//                if(cs.getCardInstallments()!=1) {
+//                    int monthNo = cs.getCardInstallments();
+//                    List<CardInstallmentSchedule> batch = new ArrayList<>();
+//                    for (int n = 1; n <= monthNo; n++) {
+//                        batch.add(generateCis(cs, n));
+//                    }
+//                    cardInstallmentScheduleRepository.saveAll(batch);
+//                }
+//            }
+//            processed++;
+//            printProgress(processed, total); // ✅ 진행률 표시
+//            if (processed % 100 == 0) {      // 💾 메모리 절약용 flush
+//                cardInstallmentScheduleRepository.flush();
+//            }
+//            if (processed > 0 && processed % BATCH_SIZE == 0) {
+//                cardInstallmentScheduleRepository.flush();
+//                entityManager.clear(); // 엔티티 캐시 제거
+//            }
+//
+//        }
+//        cardInstallmentScheduleRepository.flush();
+//    }
 
 }
 

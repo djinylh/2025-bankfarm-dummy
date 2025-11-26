@@ -23,6 +23,20 @@ mybatis:
     map-underscore-to-camel-case: true
   mapper-locations: mappers/**/*.xml
 
+#logging:
+#  level:
+#    org:
+#      hibernate:
+#        SQL: debug
+#        type:
+#          descriptor:
+#            sql:
+#              BasicBinder: trace
+#      springframework:
+#        transaction: debug
+#        orm:
+#          jpa: debug
+
 logging:
   level:
     org.hibernate.SQL: OFF

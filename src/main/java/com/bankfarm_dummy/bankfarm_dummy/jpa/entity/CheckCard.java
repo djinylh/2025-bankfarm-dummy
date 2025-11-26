@@ -5,33 +5,19 @@ import lombok.*;
 
 @Entity
 @Table(name = "check_card")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @Builder
+@NoArgsConstructor @AllArgsConstructor
 public class CheckCard {
 
     @Id
-    @Column(name = "card_user_id", nullable = false, columnDefinition = "BIGINT COMMENT '카드 ID'")
     private Long cardUserId;
 
-    /**
-     * user_card 테이블의 외래키
-     */
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "card_user_id", referencedColumnName = "card_user_id",
-            foreignKey = @ForeignKey(name = "fk_check_card_user"))
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @MapsId  // 💡 UserCard의 ID를 그대로 PK로 사용
+    @JoinColumn(name = "card_user_id")
     private UserCard userCard;
 
-    /**
-     * account 테이블의 외래키
-     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "card_acct_id", referencedColumnName = "acct_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_check_card_account"))
+    @JoinColumn(name = "card_acct_id", nullable = false)
     private Account account;
-
 }
