@@ -55,9 +55,7 @@ public class DepoContractMapperTest extends Dummy {
       BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
       String password = passwordEncoder.encode("1234");
 
-      // 계좌 상태
-      String[] cd = {"AS001","AS002","AS005"};
-      String acctSts = cd[(int)(Math.random()*cd.length)];
+
 
       // 생성 일시(예적금 상품의 판매 시작일 ~ 오늘 사이의 날짜로)
       LocalDateTime start = LocalDateTime.of(prod.getDepoStartDt().getYear(), prod.getDepoStartDt().getMonth(), prod.getDepoStartDt().getDayOfMonth(), 0, 0, 0);
@@ -70,6 +68,12 @@ public class DepoContractMapperTest extends Dummy {
       LocalDateTime randomDateTime = start.plusSeconds(randomSeconds);
       // 예적금 계약에 넣을 날짜 타입으로 변환
       LocalDate randomDate = randomDateTime.toLocalDate();
+
+      // 상품 만기일 계산(계좌 상태에 반영하기 위함)
+      LocalDate maturityDate = randomDate.plusMonths(prod.getDepoTermMonth());
+      // 계좌 상태
+      LocalDate today = LocalDate.now();
+      String acctSts = maturityDate.isAfter(today) ? "AS001" : "AS002";
 
       AccountInsertReq accountReq = new AccountInsertReq();
       accountReq.setCustId(custId);
@@ -89,7 +93,7 @@ public class DepoContractMapperTest extends Dummy {
 
       // 2. 계약 공통 데이터 생성
       // 만기 일자
-      LocalDate maturityDate = randomDate.plusMonths(prod.getDepoTermMonth());
+
 
       // 지급 방식
       String[] payoutCodes = {"DO031", "DO032", "DO032", "DO032", "DO032"};
@@ -116,6 +120,9 @@ public class DepoContractMapperTest extends Dummy {
 
       BigDecimal randomRate = randomDecimal(minRate, maxRate);
 
+      // 계약 상태
+      String activeCd = accountReq.getAcctStsCd().equals("AS001") ? "CS001" : "CS002";
+
       DepoContractInsertReq depoReq = new DepoContractInsertReq();
       depoReq.setCustId(custId);
       depoReq.setDepoProdId(prod.getDepoProdId());
@@ -124,7 +131,7 @@ public class DepoContractMapperTest extends Dummy {
       depoReq.setDepoContractDt(randomDate);
       depoReq.setDepoMaturityDt(maturityDate);
       depoReq.setDepoAppliedIntrstRt(randomRate);
-      depoReq.setDepoActiveCd("CS001");
+      depoReq.setDepoActiveCd(activeCd);
       depoReq.setDepoPayoutBankCd(payoutBank);
       depoReq.setDepoPayoutAcctNum(payoutAcctNum);
       depoReq.setDepoPayoutTp(payoutTp);
@@ -159,7 +166,7 @@ public class DepoContractMapperTest extends Dummy {
         savingsReq.setDepoMonthlyAmt(randomAmt);
 
         // 정기적금 납입 내역 데이터
-        LocalDate today = LocalDate.now();
+
         int seq = 1;
         while(!randomDate.isAfter(today)){
           randomDate = randomDate.plusMonths(seq);
@@ -178,6 +185,7 @@ public class DepoContractMapperTest extends Dummy {
         sqlSession.flushStatements();
       }else if(prod.getDepoProdTp().equals("DO004")){
         maxAmt = prod.getDepoMaxAmt();
+
       }
 
     }
