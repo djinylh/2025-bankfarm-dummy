@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DepoContractMapperTest extends Dummy {
-  final int ADD_ROW_COUNT = 300;
+  final int ADD_ROW_COUNT = 1;
   @Test
   void insertDepositContract() {
     SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
@@ -102,7 +102,7 @@ public class DepoContractMapperTest extends Dummy {
       String payoutAcctNum = null;
       String payoutBank = null;
       if(payoutTp.equals("DO032")){
-        payoutAcctNum = accountNum();
+        payoutAcctNum = accountNum(accountMapper);
 
         String[] bankCodes = {
                 "BK001","BK002","BK003","BK004","BK005",
@@ -116,8 +116,15 @@ public class DepoContractMapperTest extends Dummy {
       // 적용 금리(기본금리 ~ 기본금리 + 우대 금리)
       BigDecimal maxRate = depoContractMapper.selectProdTotalRate(prod.getDepoProdId());
       BigDecimal minRate = new BigDecimal("1.8500");
+      maxRate = maxRate.add(minRate);
+      maxRate = maxRate.setScale(4, RoundingMode.HALF_UP);
 
       BigDecimal randomRate = randomDecimal(minRate, maxRate);
+
+      System.out.println("prodId=" + prod.getDepoProdId()
+          + ", minRate=" + minRate
+          + ", maxRate=" + maxRate
+          + ", randomRate=" + randomRate);
 
       // 계약 상태
       String activeCd = accountReq.getAcctStsCd().equals("AS001") ? "CS001" : "CS002";
@@ -239,7 +246,8 @@ public class DepoContractMapperTest extends Dummy {
         sqlSession.flushStatements();
       }
       // 4. 계약서 보관 테이블 데이터
-      Long branId = depoContractMapper.selectBranchIdByEmpId(empId);
+      Long branId = depoContractMapper.selectBranchIdByEmpId(depoReq.getEmpId());
+      System.out.println("empId=" + empId + ", branId=" + branId);
       String docTitle = "";
       switch(prod.getDepoProdTp()){
         case "DO002":
@@ -306,7 +314,6 @@ public class DepoContractMapperTest extends Dummy {
     sqlSession.close();
   }
   private String accountNum(AccountMapper accountMapper){
-    SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
 
     while(true){
       Random random = new Random();
