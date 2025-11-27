@@ -23,4 +23,6 @@ public interface DepoContractMapper {
     int insertDepoContractSavings(DepoContractSavings depoContractSavings);
     int insertDepoSavingsPayment(DepoSavingsPaymentReq depoSavingsPayment);
 
+    Long selectBranchIdByEmpId(Long empId);
+
 }

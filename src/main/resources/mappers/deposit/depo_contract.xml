@@ -105,4 +105,11 @@
         depo_paid_amt = #{depoPaidAmt},
         depo_payment_yn = #{depoPaymentYn}
     </insert>
+
+<!--    계약 담당 직원 지점 아이디 가져오기-->
+    <select id="selectBranchIdByEmpId">
+        SELECT emp_id
+        FROM employees
+        WHERE emp_id = #{empId}
+    </select>
 </mapper>

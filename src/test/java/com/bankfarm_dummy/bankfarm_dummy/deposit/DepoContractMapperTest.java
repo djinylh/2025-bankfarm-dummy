@@ -11,6 +11,7 @@ import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractInsertReq;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoContractMapper;
 import com.bankfarm_dummy.bankfarm_dummy.depo.common.DepoProdMapper;
 import com.bankfarm_dummy.bankfarm_dummy.prod_document.ProdDocumentMapper;
+import com.bankfarm_dummy.bankfarm_dummy.prod_document.model.ProdDocumentReq;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
@@ -26,12 +27,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class DepoContractMapperTest extends Dummy {
   final int ADD_ROW_COUNT = 300;
   @Test
-  void getAccountByID() {
+  void insertDepositContract() {
     SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
     AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
     DepoContractMapper depoContractMapper = sqlSession.getMapper(DepoContractMapper.class);
-    DepoProdMapper depoProdMapper = sqlSession.getMapper(DepoProdMapper.class);
-    BranchMapper branchMapper = sqlSession.getMapper(BranchMapper.class);
     ProdDocumentMapper prodDocumentMapper = sqlSession.getMapper(ProdDocumentMapper.class);
 
     for (int i = 0; i < ADD_ROW_COUNT; i++) {
@@ -49,7 +48,7 @@ public class DepoContractMapperTest extends Dummy {
 
       // 1. 계좌 생성
       // 계좌 번호 생성
-      String finalAcctNum = accountNum();
+      String finalAcctNum = accountNum(accountMapper);
 
       // 비밀번호 암호화
       BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -149,10 +148,12 @@ public class DepoContractMapperTest extends Dummy {
         maxAmt = 1000000000;
         randomAmt = ThreadLocalRandom.current().nextLong(minAmt, maxAmt + 1);
 
-      DepoContractDeposit depositReq = new DepoContractDeposit();
-      depositReq.setDepoContractId(depoReq.getDepoContractId());
-      depositReq.setDepoPrncpAmt(randomAmt);
+        // 정기 예금 상세 계약 데이터
+        DepoContractDeposit depositReq = new DepoContractDeposit();
+        depositReq.setDepoContractId(depoReq.getDepoContractId());
+        depositReq.setDepoPrncpAmt(randomAmt);
 
+        depoContractMapper.insertDepoContractDeposit(depositReq);
       }else if(prod.getDepoProdTp().equals("DO003")){
         maxAmt = prod.getDepoMaxAmt();
         randomAmt = ThreadLocalRandom.current().nextLong(minAmt, maxAmt + 1);
@@ -160,35 +161,107 @@ public class DepoContractMapperTest extends Dummy {
         // 납입일(1~28)
         byte paymentDay = (byte) (1 + random.nextInt(28));
 
+        // 정기 적금 상세 계약 데이터
         DepoContractSavings savingsReq = new DepoContractSavings();
         savingsReq.setDepoContractId(depoReq.getDepoContractId());
         savingsReq.setDepoPaymentDay(paymentDay);
         savingsReq.setDepoMonthlyAmt(randomAmt);
 
-        // 정기적금 납입 내역 데이터
+        depoContractMapper.insertDepoContractSavings(savingsReq);
 
-        int seq = 1;
-        while(!randomDate.isAfter(today)){
-          randomDate = randomDate.plusMonths(seq);
+        // 정기적금 납입 내역 데이터
+        LocalDate paymentDate = depoReq.getDepoContractDt();
+        while(!paymentDate.isAfter(today)){
+          paymentDate = paymentDate.plusMonths(1);
 
           DepoSavingsPaymentReq savingsPaymentReq = new DepoSavingsPaymentReq();
           savingsPaymentReq.setDepoContractId(depoReq.getDepoContractId());
-          savingsPaymentReq.setDepoPaidDt(randomDate);
+          savingsPaymentReq.setDepoPaidDt(paymentDate);
           savingsPaymentReq.setDepoPaidAmt(randomAmt);
           savingsPaymentReq.setDepoPaymentYn("Y");
 
           depoContractMapper.insertDepoSavingsPayment(savingsPaymentReq);
 
-          seq++;
+          if (paymentDate.isAfter(today)) break;
         }
 
         sqlSession.flushStatements();
       }else if(prod.getDepoProdTp().equals("DO004")){
         maxAmt = prod.getDepoMaxAmt();
+        randomAmt = ThreadLocalRandom.current().nextLong(minAmt, maxAmt + 1);
 
+        // 가입 날 최초 납입 한번
+        DepoSavingsPaymentReq savingsPaymentReq = new DepoSavingsPaymentReq();
+        savingsPaymentReq.setDepoContractId(depoReq.getDepoContractId());
+        savingsPaymentReq.setDepoPaidDt(randomDate);
+        savingsPaymentReq.setDepoPaidAmt(randomAmt);
+        savingsPaymentReq.setDepoPaymentYn("Y");
+
+        depoContractMapper.insertDepoSavingsPayment(savingsPaymentReq);
+
+        LocalDate currentMonth = depoReq.getDepoContractDt().withDayOfMonth(1).plusMonths(1);
+
+        while (!currentMonth.isAfter(today)) {
+
+          // 이 달에 몇 번 납입할지 결정 (0~2회)
+          int payCount = random.nextInt(4); // 0,1,2 중 하나
+
+          // 같은 달 안에서 날짜가 겹치지 않도록 Set으로 관리
+          Set<Integer> daySet = new HashSet<>();
+          while (daySet.size() < payCount) {
+            int day = 1 + random.nextInt(28); // 1~28일 랜덤
+            daySet.add(day);
+          }
+
+          for (int day : daySet) {
+            LocalDate paidDate = currentMonth.withDayOfMonth(day);
+
+            // 계약 시작일 이전이거나 오늘 이후는 제외
+            if (paidDate.isBefore(depoReq.getDepoContractDt()) || paidDate.isAfter(today)) {
+              continue;
+            }
+
+            // 자유적금은 납입할 때마다 금액을 새로 랜덤
+            randomAmt = ThreadLocalRandom.current().nextLong(minAmt, maxAmt + 1);
+
+            DepoSavingsPaymentReq savingsPaymentReqSec = new DepoSavingsPaymentReq();
+            savingsPaymentReqSec.setDepoContractId(depoReq.getDepoContractId());
+            savingsPaymentReqSec.setDepoPaidDt(paidDate);
+            savingsPaymentReqSec.setDepoPaidAmt(randomAmt);
+            savingsPaymentReqSec.setDepoPaymentYn("Y");
+
+            depoContractMapper.insertDepoSavingsPayment(savingsPaymentReqSec);
+          }
+
+          // 다음 달로 이동
+          currentMonth = currentMonth.plusMonths(1);
+        }
+        sqlSession.flushStatements();
+      }
+      // 4. 계약서 보관 테이블 데이터
+      Long branId = depoContractMapper.selectBranchIdByEmpId(empId);
+      String docTitle = "";
+      switch(prod.getDepoProdTp()){
+        case "DO002":
+          docTitle = "정기 예금 계약 문서 제목";
+          break;
+        case "DO003":
+          docTitle = "정기 적금 계약 문서 제목";
+          break;
+        case "DO004":
+          docTitle = "자유 적금 계약 문서 제목";
+          break;
       }
 
+      ProdDocumentReq documentReq = new ProdDocumentReq();
+      documentReq.setBranId(branId);
+      documentReq.setDocNm(docTitle);
+      documentReq.setDocProdTp("PD006");
+      documentReq.setDocProdId(depoReq.getDepoProdId());
+      prodDocumentMapper.prodDocumentJoin(documentReq);
     }
+    sqlSession.commit();
+    sqlSession.close();
   }
 
   // 상품 금리 테이블 더미데이터
@@ -232,11 +305,9 @@ public class DepoContractMapperTest extends Dummy {
     sqlSession.commit();
     sqlSession.close();
   }
-  private String accountNum(){
+  private String accountNum(AccountMapper accountMapper){
     SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
 
-    //계좌 맵퍼
-    AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
     while(true){
       Random random = new Random();
       StringBuilder sb = new StringBuilder();
