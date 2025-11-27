@@ -209,3 +209,61 @@ CREATE TABLE card_billing (
                                   FOREIGN KEY (card_user_id)
                                       REFERENCES user_card (card_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='월별 청구서';
+
+
+
+
+
+
+
+
+
+CREATE TABLE credit_overdue (
+                                card_overdue_id     BIGINT NOT NULL AUTO_INCREMENT COMMENT '연체 ID',
+                                card_billing_id     BIGINT NOT NULL COMMENT '청구서 ID',
+                                card_overdue_amt    BIGINT NOT NULL COMMENT '연체 금액',
+                                card_st_at          DATETIME NOT NULL COMMENT '연체 시작일',
+                                card_ed_at          DATETIME NULL COMMENT '최종 납부일',
+                                card_overdue_pay_yn CHAR(1) NOT NULL COMMENT '납입 여부 (Y/N)',
+
+                                PRIMARY KEY (card_overdue_id),
+                                CONSTRAINT fk_credit_overdue_billing
+                                    FOREIGN KEY (card_billing_id)
+                                        REFERENCES card_billing(card_billing_id)
+                                        ON DELETE CASCADE
+                                        ON UPDATE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='연체내역';
+
+
+
+
+
+CREATE TABLE prod_document (
+                               bran_id      BIGINT       NOT NULL COMMENT '지점 ID',
+                               doc_prod_tp  VARCHAR(5)   NOT NULL COMMENT '상품 타입',
+                               doc_prod_id  BIGINT       NOT NULL COMMENT '상품 ID',
+                               doc_nm       VARCHAR(20)  NOT NULL COMMENT '문서 이름',
+                               doc_crt_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
+
+                               PRIMARY KEY (bran_id, doc_prod_tp, doc_prod_id, doc_nm)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='계약서 보관';
+
+
+
+
+CREATE TABLE overdue_history (
+                                 od_id          BIGINT NOT NULL AUTO_INCREMENT COMMENT '연체 ID',
+                                 cust_id        BIGINT NOT NULL COMMENT '고객 ID',
+                                 od_source_id   BIGINT NOT NULL COMMENT '해당 ID',
+                                 od_tp          VARCHAR(5) NOT NULL COMMENT '연체 타입 (카드/대출/보험 등)',
+                                 od_st_dt       DATE NOT NULL COMMENT '연체 시작일',
+                                 od_amt         BIGINT NOT NULL COMMENT '연체 금액',
+
+                                 PRIMARY KEY (od_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='총 연체 기록';

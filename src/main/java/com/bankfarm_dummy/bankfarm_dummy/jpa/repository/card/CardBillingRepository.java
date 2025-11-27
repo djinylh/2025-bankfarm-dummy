@@ -8,53 +8,64 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CardBillingRepository extends JpaRepository<CardBilling, Long> {
 
+    List<CardBilling> findByCardBillingStsAndCardBillingIdBetween(
+            String cardBillingSts, Long startId, Long endId
+    );
     @Modifying
     @Transactional
     @Query(value = """
             UPDATE card_billing b
             JOIN (
                 SELECT
-                    uc.card_user_id,
-                    DATE_FORMAT(cs.card_trns_dt, '%Y-%m-01') AS billing_month,
+                    user_id,
+                    billing_month,
+                    SUM(one_time_amt) AS total_new_charges,
+                    SUM(installment_amt) AS total_installments
+                FROM (
+                    -- 🧾 일시불 거래 (사전에 집계)
+                    SELECT
+                        cs.card_user_id AS user_id,
+                        DATE_FORMAT(DATE_ADD(cs.card_trns_dt, INTERVAL 1 MONTH), '%Y-%m-01') AS billing_month,
+                        SUM(cs.card_og_amt) AS one_time_amt,
+                        0 AS installment_amt
+                    FROM credit_card_statement cs
+                    WHERE (cs.card_installments = 1 OR cs.card_installments IS NULL)
+                      AND (cs.card_crd_refund_yn = 'N' OR cs.card_crd_refund_yn IS NULL)
+                    GROUP BY cs.card_user_id, DATE_FORMAT(DATE_ADD(cs.card_trns_dt, INTERVAL 1 MONTH), '%Y-%m-01')
             
-                    SUM(
-                        CASE
-                            WHEN LOWER(TRIM(COALESCE(cs.card_crd_refund_yn, 'n'))) = 'n'
-                                 AND cs.card_installments = 1
-                            THEN cs.card_og_amt
-                            ELSE 0
-                        END
-                    ) AS total_one_time,
+                    UNION ALL
             
-                    SUM(
-                        CASE
-                            WHEN LOWER(TRIM(COALESCE(s.card_schedule_refund_yn, 'n'))) = 'n'
-                                 AND cs.card_installments > 1
-                            THEN COALESCE(s.card_installment_amt, 0)
-                            ELSE 0
-                        END
-                    ) AS total_installments
-            
-                FROM credit_card_statement cs
-                JOIN user_card uc ON uc.card_user_id = cs.card_user_id
-                LEFT JOIN card_installment_schedule s ON s.card_crd_statement_id = cs.card_crd_statement_id
-                GROUP BY uc.card_user_id, billing_month
-            ) tmp
-            ON b.card_user_id = tmp.card_user_id
-            AND DATE(b.card_billing_year_month) = DATE(tmp.billing_month)
+                    -- 💳 할부 거래 (회차별 due_at 기준, 사전에 집계)
+                    SELECT
+                        cs.card_user_id AS user_id,
+                        DATE_FORMAT(s.card_due_at, '%Y-%m-01') AS billing_month,
+                        0 AS one_time_amt,
+                        SUM(s.card_installment_amt) AS installment_amt
+                    FROM credit_card_statement cs
+                    JOIN card_installment_schedule s
+                      ON s.card_crd_statement_id = cs.card_crd_statement_id
+                    WHERE cs.card_installments > 1
+                      AND (s.card_schedule_refund_yn = 'N' OR s.card_schedule_refund_yn IS NULL)
+                    GROUP BY cs.card_user_id, DATE_FORMAT(s.card_due_at, '%Y-%m-01')
+                ) t
+                GROUP BY user_id, billing_month
+            ) agg
+              ON b.card_user_id = agg.user_id
+             AND DATE_FORMAT(b.card_billing_year_month, '%Y-%m-01') = agg.billing_month
             SET
-                b.card_new_charges = COALESCE(tmp.total_one_time, 0),
-                b.card_installment_amt = COALESCE(tmp.total_installments, 0),
-                b.card_total_due = COALESCE(tmp.total_one_time, 0) + COALESCE(tmp.total_installments, 0),
+                b.card_new_charges = COALESCE(agg.total_new_charges, 0),
+                b.card_installment_amt = COALESCE(agg.total_installments, 0),
+                b.card_total_due = COALESCE(agg.total_new_charges, 0) + COALESCE(agg.total_installments, 0),
                 b.card_billing_sts = 'CD027';
-        """, nativeQuery = true)
-    int bulkUpdateBilling();
-
+            WHERE b.card_billing_sts = 'CD026';
+    """, nativeQuery = true)
+    int updateBillingAmounts();
 
     Optional<CardBilling> findByUserCard_CardUserIdAndCardBillingYearMonth(Long cardUserId, LocalDate ym);
 }

@@ -54,19 +54,25 @@ public class BankCardStatementDummy extends JpaDummy {
         int page = 0;
         int size = 5000;
         Page<CreditCardStatement> pageResult;
-        long limit = 5000;
+        long start = 150001;     // 💡 시작 인덱스
+        long end = 200000;      // 💡 종료 인덱스
+        long processedCount = 0; // 전체 진행 인덱스
+        long insertedCount = 0;
 
-        long totalCount = cardStatementRepository.count(); // 전체 거래 수
-        long processedCount = 0;
         long startTime = System.currentTimeMillis();
 
         outerLoop:
         do {
             pageResult = cardStatementRepository.findAll(PageRequest.of(page, size));
-            List<CreditCardStatement> stmts = pageResult.getContent();
+            List<CreditCardStatement> stmts = new ArrayList<>(pageResult.getContent());
 
             for (CreditCardStatement cs : stmts) {
                 processedCount++;
+
+                // ✅ 지정된 구간이 아닐 경우 스킵
+                if (processedCount < start || processedCount > end) {
+                    continue;
+                }
 
                 // ✅ 조건: 환불 아닌 할부 거래만 스케줄 생성
                 if (!"Y".equalsIgnoreCase(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
@@ -76,16 +82,17 @@ public class BankCardStatementDummy extends JpaDummy {
                             CardInstallmentSchedule cis = generateCis(cs, n);
                             cardInstallmentScheduleRepository.save(cis);
                         }
+                        insertedCount++;
                     }
                 }
 
                 // ✅ 100건마다 진행률 출력
-                if (processedCount % 100 == 0) {
-                    printProgress(processedCount, Math.min(limit, totalCount), startTime);
+                if ((processedCount - start + 1) % 100 == 0 && processedCount >= start && processedCount <= end) {
+                    printProgress(processedCount - start + 1, (end - start + 1), startTime);
                 }
 
-                // ✅ 5,000건 처리 시 중단
-                if (processedCount >= limit) {
+                // ✅ 지정 구간 종료
+                if (processedCount >= end) {
                     break outerLoop;
                 }
             }
@@ -98,8 +105,8 @@ public class BankCardStatementDummy extends JpaDummy {
 
         } while (!pageResult.isLast());
 
-        long endTime = System.currentTimeMillis();
-        System.out.println("\n✅ 처리 완료: " + processedCount + "건 (" + (endTime - startTime) / 1000 + "초 소요)");
+        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+        System.out.printf("%n✅ 처리 완료: %d건 (%d ~ %d), 총 소요: %d초%n", insertedCount, start, end, elapsed);
     }
 
     private void printProgress(long processed, long total, long startTime) {
@@ -117,54 +124,40 @@ public class BankCardStatementDummy extends JpaDummy {
         System.out.flush();
     }
 
-    void processStatements(List<CreditCardStatement> stmts) {
-        // ✅ 한 페이지당 할부스케줄 insert
-        for(int i=50001;i<=100000;i++ ) {
-            CreditCardStatement cs = stmts.get(i);
-            if ("N".equals(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
-                for (int n = 1; n <= cs.getCardInstallments(); n++) {
-                    CardInstallmentSchedule cis = generateCis(cs, n);
-                    cardInstallmentScheduleRepository.save(cis);
-                }
-            }
-        }
-        cardInstallmentScheduleRepository.flush();
-    }
-
-    @Test
-    @Rollback(false)
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void insCardTrns() {
-
-        int SIZE = 100000; // 이 중에 반만 신용카드
-
-        List<CreditCardStatement> statementList = new ArrayList<>();
-        // 신용카드 명세서 insert
-        insCardStam(SIZE);
-        // 신용카드명세서들의 할부스케줄 생성
-       //insInstmSchd();
-    }
-
-
-    void insCardStam(int SIZE){
-        List<CreditCardStatement> statementList = new ArrayList<>();
-        for (int i = 0; i < SIZE; i++) {
-            int randomIndex = (int) (Math.random() * userCardList.size());
-            UserCard uc = userCardList.get(randomIndex);
-            // 신용카드인 카드 명세서 발급
-            if (uc.getCard().getCardTp() == 0) {
-                CreditCardStatement cs = generateCrdCardStm(uc);
-                statementList.add(cs);
-            }
-            if (i % 1000 == 0) {      // 💾 메모리 절약용 flush
-                entityManager.clear();      // ✅ 메모리 누적 차단
-                System.gc();
-            }
-
-        }
-        cardStatementRepository.saveAll(statementList);
-        cardStatementRepository.flush();
-    }
+//    @Test
+//    @Rollback(false)
+//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+//    void insCardTrns() {
+//
+//        int SIZE = 100000; // 이 중에 반만 신용카드
+//
+//        List<CreditCardStatement> statementList = new ArrayList<>();
+//        // 신용카드 명세서 insert
+//        insCardStam(SIZE);
+//        // 신용카드명세서들의 할부스케줄 생성
+//       //insInstmSchd();
+//    }
+//
+//
+//    void insCardStam(int SIZE){
+//        List<CreditCardStatement> statementList = new ArrayList<>();
+//        for (int i = 0; i < SIZE; i++) {
+//            int randomIndex = (int) (Math.random() * userCardList.size());
+//            UserCard uc = userCardList.get(randomIndex);
+//            // 신용카드인 카드 명세서 발급
+//            if (uc.getCard().getCardTp() == 0) {
+//                CreditCardStatement cs = generateCrdCardStm(uc);
+//                statementList.add(cs);
+//            }
+//            if (i % 1000 == 0) {      // 💾 메모리 절약용 flush
+//                entityManager.clear();      // ✅ 메모리 누적 차단
+//                System.gc();
+//            }
+//
+//        }
+//        cardStatementRepository.saveAll(statementList);
+//        cardStatementRepository.flush();
+//    }
 
     private void printProgress(int current, int total) {
         int percent = (current * 100) / total;
@@ -251,6 +244,18 @@ public class BankCardStatementDummy extends JpaDummy {
 //        }
 //        cardInstallmentScheduleRepository.flush();
 //    }
-
+//void processStatements(List<CreditCardStatement> stmts) {
+//    // ✅ 한 페이지당 할부스케줄 insert
+//    for(int i=50001;i<=100000;i++ ) {
+//        CreditCardStatement cs = stmts.get(i);
+//        if ("N".equals(cs.getCardCrdRefundYn()) && cs.getCardInstallments() > 1) {
+//            for (int n = 1; n <= cs.getCardInstallments(); n++) {
+//                CardInstallmentSchedule cis = generateCis(cs, n);
+//                cardInstallmentScheduleRepository.save(cis);
+//            }
+//        }
+//    }
+//    cardInstallmentScheduleRepository.flush();
+//}
 }
 

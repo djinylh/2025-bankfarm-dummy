@@ -50,16 +50,15 @@ public class BankCardBillingDummy2 extends JpaDummy {
         bulkUpdateBilling();  //
     }
 
-    /**
-     * ✅ 페이징 단위로 청구서 생성
-     */
-
-
     private LocalDateTime calculateDueDate(LocalDate billingYm) {
         return billingYm.plusMonths(1)
                 .withDayOfMonth(1)
                 .atStartOfDay();
     }
+
+    /**
+     * ✅ 페이징 단위로 청구서 생성
+     */
 
     void insBillingPaged() {
         int page = 0;
@@ -68,14 +67,15 @@ public class BankCardBillingDummy2 extends JpaDummy {
 
         int totalInserted = 0;
         int globalIndex = 0;
-        int start = 1; //
-        int end = 5000;
+        int start = 100001; //
+        int end = 150000;
 
         int total = end - start + 1;
         long startTime = System.currentTimeMillis();
 
         do {
-            pageResult = cardStatementRepository.findAll(PageRequest.of(page, size));
+            pageResult = cardStatementRepository.findActiveStatements(PageRequest.of(page, size));
+//            pageResult = cardStatementRepository.findAll(PageRequest.of(page, size));
             List<CreditCardStatement> stmts = pageResult.getContent();
             List<CardBilling> newBillings = new ArrayList<>();
 
@@ -84,6 +84,7 @@ public class BankCardBillingDummy2 extends JpaDummy {
                 if (globalIndex < start || globalIndex > end) {
                     continue;
                 }
+
                 Long cardUserId = cs.getUserCard().getCardUserId();
                 LocalDate billingYm = YearMonth.from(cs.getCardTrnsDt()).plusMonths(1).atDay(1);
 
@@ -133,11 +134,8 @@ public class BankCardBillingDummy2 extends JpaDummy {
 
     }
 
-    /**
-     * ✅ 네이티브 SQL로 일괄 업데이트
-     */
     void bulkUpdateBilling() {
-        int updated = cardBillingRepository.bulkUpdateBilling();
+        int updated = cardBillingRepository.updateBillingAmounts();
         System.out.println("✅ 청구서 일괄 업데이트 완료: " + updated + "건 반영됨");
     }
 

@@ -15,6 +15,8 @@ public interface CardInstallmentScheduleRepository extends JpaRepository<CardIns
 
     boolean existsByCreditCardStatement(CreditCardStatement cs);
 
+    boolean existsByCreditCardStatement_CardCrdStatementIdAndCardScheduleRefundYn(Long statementId, String refundYn);
+
     @Query("select distinct c.creditCardStatement.cardCrdStatementId from CardInstallmentSchedule c")
     Set<Long> findAllCreditCardStatementIds();
 }

@@ -47,8 +47,8 @@ public class BankCardBillingDummy extends JpaDummy {
     @Rollback(false)
     @Transactional
     void run() {
-        insBilling();
-        updateBilling();
+//        insBilling();
+//        updateBilling();
     }
 
     void insBilling(){

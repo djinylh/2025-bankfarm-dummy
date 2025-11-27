@@ -40,6 +40,7 @@ public class CreditCardStatement {
     @Column(name = "card_installments", columnDefinition = "INT DEFAULT 1 COMMENT '할부기간 (1초과시 할부)'")
     private Integer cardInstallments = 1;
     @Builder.Default
+    
     @Column(name = "card_trns_dt", nullable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '사용일자'")
     private LocalDateTime cardTrnsDt = LocalDateTime.now();
 
