@@ -15,4 +15,11 @@
         ,   loan_due_sts = #{loanDueSts}
     </insert>
 
+    <select id="getLoanProductDesList">
+        SELECT la.emp_id, la.loan_dcsn_dt, la.loan_app_id
+        FROM loan l
+        LEFT JOIN loan_application la
+        ON l.loan_app_id = la.loan_app_id
+    </select>
+
 </mapper>

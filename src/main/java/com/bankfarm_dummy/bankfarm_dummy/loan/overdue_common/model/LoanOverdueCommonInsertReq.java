@@ -8,10 +8,10 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class LoanOverdueCommonInsert {
+public class LoanOverdueCommonInsertReq {
     private long custId;
     private long odSourceId;
-    private ProductEnum odTp;
+    private String odTp;
     private LocalDate odStDt;
     private long odAmt;
 }
