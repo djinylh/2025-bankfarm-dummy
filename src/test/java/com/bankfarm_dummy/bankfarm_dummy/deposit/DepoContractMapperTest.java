@@ -91,8 +91,6 @@ public class DepoContractMapperTest extends Dummy {
       sqlSession.flushStatements();
 
       // 2. 계약 공통 데이터 생성
-      // 만기 일자
-
 
       // 지급 방식
       String[] payoutCodes = {"DO031", "DO032", "DO032", "DO032", "DO032"};
