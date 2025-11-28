@@ -106,6 +106,19 @@ public class BankUserCardDummy extends JpaDummy {
 
     // 이하 generate 메서드 그대로 유지 (생략)
 
+    void insCreditCard(){
+        List<Account> allAccounts = new ArrayList<>();
+        List<UserCard> allUserCards = new ArrayList<>();
+        int page = 0;
+        int pageSize = 5000;
+        Page<Account> pageResult;
+        do {
+            pageResult = accountRepository.findAll(PageRequest.of(page, pageSize));
+            allAccounts.addAll(pageResult.getContent());
+            em.clear();
+            page++;
+        } while (!pageResult.isLast());
+    }
 
 
 
