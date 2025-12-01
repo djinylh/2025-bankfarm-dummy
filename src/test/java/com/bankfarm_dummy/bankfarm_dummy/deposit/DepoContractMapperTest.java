@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DepoContractMapperTest extends Dummy {
-  final int ADD_ROW_COUNT = 200_000;
+  final int ADD_ROW_COUNT = 1000;
   final int CHUNK_SIZE   = 1_000;  // 1,000건마다 중간 commit
 
   @Test
@@ -65,10 +65,10 @@ public class DepoContractMapperTest extends Dummy {
       for (int i = 0; i < ADD_ROW_COUNT; i++) {
 
         // CHUNK_SIZE마다 한 번씩 중간 commit으로 트랜잭션/로그 부담 줄이기
-        if (i > 0 && i % CHUNK_SIZE == 0) {
-          sqlSession.commit();
-          sqlSession.clearCache(); // MyBatis 1차 캐시 정리
-        }
+//        if (i > 0 && i % CHUNK_SIZE == 0) {
+//          sqlSession.commit();
+//          sqlSession.clearCache(); // MyBatis 1차 캐시 정리
+//        }
 
         // 랜덤으로 뽑은 fk 아이디, 상품 정보
         Long custId = custIds.get(random.nextInt(custIds.size()));

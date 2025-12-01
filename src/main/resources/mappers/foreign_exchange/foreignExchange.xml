@@ -60,8 +60,7 @@
         SELECT fx_rt_id
         FROM fx_rt_history
         WHERE fx_currency_id = #{currencyId}
-        AND fx_crt_at <= #{baseDateTime}
-        ORDER BY fx_crt_at DESC
+        AND DATE(fx_crt_at) = #{baseDate}
         LIMIT 1
     </select>
 </mapper>
