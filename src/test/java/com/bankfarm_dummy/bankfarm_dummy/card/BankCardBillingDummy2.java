@@ -20,9 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BankCardBillingDummy2 extends JpaDummy {
@@ -46,8 +44,8 @@ public class BankCardBillingDummy2 extends JpaDummy {
     @Transactional
     @Rollback(false)
     void run() {
-        insBillingPaged();    //
-//        bulkUpdateBilling();  //
+//        insBillingPaged();    //
+        bulkUpdateBilling();  //
     }
 
     private LocalDateTime calculateDueDate(LocalDate billingYm) {
@@ -91,7 +89,24 @@ public class BankCardBillingDummy2 extends JpaDummy {
                 Optional<CardBilling> existing = cardBillingRepository
                         .findByUserCard_CardUserIdAndCardBillingYearMonth(cardUserId, billingYm);
 
-                if (existing.isEmpty()) {
+                if (existing.isPresent()) {
+                    // ✅ 이미 존재하는 billing → 업데이트만 수행
+                    CardBilling billing = existing.get();
+
+                    if (cs.getCardInstallments() == 1) {
+                        billing.setCardNewCharges(billing.getCardNewCharges() + cs.getCardOgAmt());
+                    } else {
+                        billing.setCardInstallmentAmt(billing.getCardInstallmentAmt() + cs.getCardOgAmt());
+                    }
+
+                    billing.setCardTotalDue(billing.getCardTotalDue() + cs.getCardOgAmt());
+                    billing.setCardBillingSts("CD026"); // 상태 유지 or 갱신
+                    billing.setCardDueDate(calculateDueDate(billingYm));
+
+                    // 💾 즉시 DB 반영 (혹은 나중에 saveAll로 일괄 처리 가능)
+                    cardBillingRepository.save(billing);
+                }
+                 else {
                     CardBilling billing = CardBilling.builder()
                             .userCard(cs.getUserCard())
                             .cardBillingYearMonth(billingYm)
@@ -103,23 +118,6 @@ public class BankCardBillingDummy2 extends JpaDummy {
                             .cardDueDate(calculateDueDate(billingYm))
                             .build();
                     newBillings.add(billing);
-                }else{
-                    CardBilling billing = existing.get();
-
-                    if (cs.getCardInstallments() == 1) {
-                        billing.setCardNewCharges(billing.getCardNewCharges() + cs.getCardOgAmt());
-                        billing.setCardTotalDue(billing.getCardTotalDue() + cs.getCardOgAmt());
-                    } else {
-                        billing.setCardInstallmentAmt(billing.getCardInstallmentAmt() + cs.getCardOgAmt());
-                        billing.setCardTotalDue(billing.getCardTotalDue() + cs.getCardOgAmt());
-                    }
-
-                    // 상태 및 납부기한은 그대로 두거나 갱신
-                    billing.setCardBillingSts("CD026");
-                    billing.setCardDueDate(calculateDueDate(billingYm));
-
-                    // ✅ save()로 갱신
-                    cardBillingRepository.save(billing);
                 }
 
                 if ((globalIndex - start + 1) % 100 == 0 && globalIndex >= start && globalIndex <= end) {

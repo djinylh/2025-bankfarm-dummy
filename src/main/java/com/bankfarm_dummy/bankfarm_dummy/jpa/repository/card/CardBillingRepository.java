@@ -28,7 +28,7 @@ public interface CardBillingRepository extends JpaRepository<CardBilling, Long> 
                     SUM(one_time_amt) AS total_new_charges,
                     SUM(installment_amt) AS total_installments
                 FROM (
-                    -- 🧾 일시불 거래 (사전에 집계)
+                    -- 
                     SELECT
                         cs.card_user_id AS user_id,
                         DATE_FORMAT(DATE_ADD(cs.card_trns_dt, INTERVAL 1 MONTH), '%Y-%m-01') AS billing_month,
@@ -41,7 +41,7 @@ public interface CardBillingRepository extends JpaRepository<CardBilling, Long> 
             
                     UNION ALL
             
-                    -- 💳 할부 거래 (회차별 due_at 기준, 사전에 집계)
+                    -- 
                     SELECT
                         cs.card_user_id AS user_id,
                         DATE_FORMAT(s.card_due_at, '%Y-%m-01') AS billing_month,
@@ -62,7 +62,7 @@ public interface CardBillingRepository extends JpaRepository<CardBilling, Long> 
                 b.card_new_charges = COALESCE(agg.total_new_charges, 0),
                 b.card_installment_amt = COALESCE(agg.total_installments, 0),
                 b.card_total_due = COALESCE(agg.total_new_charges, 0) + COALESCE(agg.total_installments, 0),
-                b.card_billing_sts = 'CD027';
+                b.card_billing_sts = 'CD027'
             WHERE b.card_billing_sts = 'CD026';
     """, nativeQuery = true)
     int updateBillingAmounts();

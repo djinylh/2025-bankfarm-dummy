@@ -54,8 +54,8 @@ public class BankCardStatementDummy extends JpaDummy {
         int page = 0;
         int size = 5000;
         Page<CreditCardStatement> pageResult;
-        long start = 150001;     // 💡 시작 인덱스
-        long end = 200000;      // 💡 종료 인덱스
+        long start = 300001;     // 💡 시작 인덱스
+        long end = 500000;      // 💡 종료 인덱스
         long processedCount = 0; // 전체 진행 인덱스
         long insertedCount = 0;
 
