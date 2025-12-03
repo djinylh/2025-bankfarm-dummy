@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DepoContractMapperTest extends Dummy {
-  final int ADD_ROW_COUNT = 100_000;
+  final int ADD_ROW_COUNT = 200_000;
   final int CHUNK_SIZE   = 1_000;  // 1,000건마다 중간 commit
 
   @Test
