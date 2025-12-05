@@ -27,5 +27,8 @@ public class DepoTermMapperTest extends Dummy {
 
             depoTermMapper.insertTermContract(req);
         }
+        sqlSession.flushStatements();
+        sqlSession.commit();
+        sqlSession.close();
     }
 }
